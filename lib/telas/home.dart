@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uber/telas/cadastro.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -10,6 +11,13 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   TextEditingController _controllerEmail = TextEditingController();
   TextEditingController _controllerSenha = TextEditingController();
+
+  _abreTelaCadastro() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const Cadastro()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +45,6 @@ class _HomeState extends State<Home> {
                 ),
                 TextField(
                   controller: _controllerEmail,
-                  autofocus: true,
                   keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(fontSize: 20),
                   decoration: InputDecoration(
@@ -86,7 +93,9 @@ class _HomeState extends State<Home> {
                       "Não tem conta? Cadastre-se!",
                       style: TextStyle(color: Colors.white),
                     ),
-                    onTap: () {},
+                    onTap: () {
+                      _abreTelaCadastro();
+                    },
                   ),
                 ),
                 const Padding(
