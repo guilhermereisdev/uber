@@ -1,47 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:uber/telas/cadastro.dart';
 
-class Home extends StatefulWidget {
-  const Home({super.key});
+class Cadastro extends StatefulWidget {
+  const Cadastro({super.key});
 
   @override
-  State<Home> createState() => _HomeState();
+  State<Cadastro> createState() => _CadastroState();
 }
 
-class _HomeState extends State<Home> {
+class _CadastroState extends State<Cadastro> {
+  TextEditingController _controllerNome = TextEditingController();
   TextEditingController _controllerEmail = TextEditingController();
   TextEditingController _controllerSenha = TextEditingController();
-
-  _abreTelaCadastro() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const Cadastro()),
-    );
-  }
+  bool _tipoUsuarioPassageiro = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("Cadastro"),
+      ),
       body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage("images/fundo.png"),
-            fit: BoxFit.cover,
-          ),
-        ),
         padding: const EdgeInsets.all(16),
         child: Center(
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 32),
-                  child: Image.asset(
-                    "images/logo.png",
-                    width: 200,
-                    height: 150,
-                  ),
+                TextField(
+                  controller: _controllerNome,
+                  autofocus: true,
+                  keyboardType: TextInputType.name,
+                  style: const TextStyle(fontSize: 20),
+                  decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                      hintText: "nome completo",
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      )),
                 ),
                 TextField(
                   controller: _controllerEmail,
@@ -71,6 +68,32 @@ class _HomeState extends State<Home> {
                       )),
                 ),
                 Padding(
+                  padding: const EdgeInsets.only(top: 24),
+                  child: Column(
+                    children: [
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [Text("Tipo de usuário:")],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text("Passageiro"),
+                          Switch(
+                            value: _tipoUsuarioPassageiro,
+                            onChanged: (valor) {
+                              setState(() {
+                                _tipoUsuarioPassageiro = valor;
+                              });
+                            },
+                          ),
+                          const Text("Motorista"),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
                   padding: const EdgeInsets.only(top: 16, bottom: 10),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -79,23 +102,12 @@ class _HomeState extends State<Home> {
                     ),
                     onPressed: () {},
                     child: const Text(
-                      "Entrar",
+                      "Cadastrar",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                       ),
                     ),
-                  ),
-                ),
-                Center(
-                  child: GestureDetector(
-                    child: const Text(
-                      "Não tem conta? Cadastre-se!",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    onTap: () {
-                      _abreTelaCadastro();
-                    },
                   ),
                 ),
                 const Padding(
