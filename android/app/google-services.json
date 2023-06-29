@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "625128337187",
+    "project_id": "uber-gui",
+    "storage_bucket": "uber-gui.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:625128337187:android:b3fcfa4eedac3c7621e696",
+        "android_client_info": {
+          "package_name": "com.guilhermereisapps.uber"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "625128337187-7h9q8sd69ohtbu8ardvabddtsciolhb7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUnB4mX5BSf4n6z1h1hfDzA3yDAHCT8wk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "625128337187-7h9q8sd69ohtbu8ardvabddtsciolhb7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
