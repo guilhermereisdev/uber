@@ -110,12 +110,21 @@ class _CadastroState extends State<Cadastro> {
                     ),
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.only(top: 16),
-                  child: Center(
-                    child: Text(
-                      "Erro",
-                      style: TextStyle(color: Colors.red, fontSize: 20),
+                Visibility(
+                  visible: _errorContainerVisibility,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      color: Colors.red,
+                      child: Text(
+                        _mensagemErro,
+                        style: const TextStyle(color: Colors.white),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 ),
