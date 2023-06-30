@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:uber/telas/cadastro.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -13,10 +12,7 @@ class _HomeState extends State<Home> {
   TextEditingController _controllerSenha = TextEditingController();
 
   _abreTelaCadastro() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const Cadastro()),
-    );
+    Navigator.pushNamed(context, "/cadastro");
   }
 
   @override
@@ -48,13 +44,14 @@ class _HomeState extends State<Home> {
                   keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(fontSize: 20),
                   decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                      hintText: "e-mail",
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      )),
+                    contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                    hintText: "e-mail",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
                 ),
                 TextField(
                   controller: _controllerSenha,
@@ -62,13 +59,14 @@ class _HomeState extends State<Home> {
                   keyboardType: TextInputType.visiblePassword,
                   style: const TextStyle(fontSize: 20),
                   decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                      hintText: "senha",
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      )),
+                    contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                    hintText: "senha",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: 16, bottom: 10),
