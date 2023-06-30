@@ -1,4 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../exception/custom_exception.dart';
+import '../model/Usuario.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -8,12 +11,60 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  TextEditingController _controllerEmail = TextEditingController();
-  TextEditingController _controllerSenha = TextEditingController();
+  final TextEditingController _controllerEmail =
+      TextEditingController(text: "guilhermereis2009@hotmail.com");
 
-  _abreTelaCadastro() {
-    Navigator.pushNamed(context, "/cadastro");
+  final TextEditingController _controllerSenha =
+      TextEditingController(text: "11111111");
+  bool _errorContainerVisibility = false;
+  String _mensagemErro = "";
+
+  bool _validarCampos() {
+    if (_controllerEmail.text.isNotEmpty) {
+      if (_controllerSenha.text.length >= 8) {
+        return true;
+      } else {
+        throw CustomException("A senha deve conter no mínimo 8 caracteres.");
+      }
+    } else {
+      throw CustomException("Preencha o campo de e-mail.");
+    }
   }
+
+  Future<bool> _logarUsuario() async {
+    Usuario usuario = Usuario();
+    usuario.email = _controllerEmail.text;
+    usuario.senha = _controllerSenha.text;
+
+    try {
+      FirebaseAuth auth = FirebaseAuth.instance;
+      await auth.signInWithEmailAndPassword(
+        email: usuario.email,
+        password: usuario.senha,
+      );
+      return Future.value(true);
+    } on FirebaseAuthException catch (ex) {
+      switch (ex.code) {
+        case "user-disabled":
+          throw CustomException(
+              "Esse usuário está desabilitado e não pode utilizar a plataforma.");
+        case "invalid-email":
+          throw CustomException("Formato de e-mail inválido.");
+        case "user-not-found":
+          throw CustomException("Não há usuário relacionado a esse e-mail.");
+        case "wrong-password":
+          throw CustomException("Senha incorreta.");
+      }
+    } catch (ex) {
+      throw CustomException(ex.toString());
+    }
+    return Future.value(false);
+  }
+
+  _abreTelaCadastro() => Navigator.pushNamed(context, "/cadastro");
+
+  _abreTelaInicialAreaLogada() =>
+      Navigator.pushReplacementNamed(context, "/painel-passageiro");
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +126,24 @@ class _HomeState extends State<Home> {
                       backgroundColor: Colors.black,
                       padding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
                     ),
-                    onPressed: () {},
+                    onPressed: () async {
+                      setState(() {
+                        _mensagemErro = "";
+                        _errorContainerVisibility = false;
+                      });
+                      try {
+                        if (_validarCampos()) {
+                          if (await _logarUsuario()) {
+                            _abreTelaInicialAreaLogada();
+                          }
+                        }
+                      } catch (ex) {
+                        setState(() {
+                          _mensagemErro = ex.toString();
+                          _errorContainerVisibility = true;
+                        });
+                      }
+                    },
                     child: const Text(
                       "Entrar",
                       style: TextStyle(
@@ -96,12 +164,21 @@ class _HomeState extends State<Home> {
                     },
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.only(top: 16),
-                  child: Center(
-                    child: Text(
-                      "Erro",
-                      style: TextStyle(color: Colors.red, fontSize: 20),
+                Visibility(
+                  visible: _errorContainerVisibility,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      color: Colors.red,
+                      child: Text(
+                        _mensagemErro,
+                        style: const TextStyle(color: Colors.white),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 ),
