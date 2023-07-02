@@ -15,5 +15,5 @@ Replica todas as funcionalidades básicas do app Uber, como:
 
 ### Técnicas utilizadas
 - Firebase Auth - Usuário cria conta pelo app e o acessa usando e-mail e senha.
-- 
+- Firebase Firestore - Armazena informações sobre os usuários na nuvem com acesso em tempo real.
 - Tratamento de erros (Exceptions) - Erros são tratados com exceções customizadas, exibindo mensagens claras e em português, para ficar claro para o usuário qual atitude tomar.
