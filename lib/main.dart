@@ -6,14 +6,6 @@ import 'firebase_options.dart';
 
 final ThemeData temaPadrao = ThemeData(
   appBarTheme: const AppBarTheme(color: Colors.black),
-  inputDecorationTheme: const InputDecorationTheme(
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(width: 1, color: Colors.black),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(width: 4, color: Colors.black),
-    ),
-  ),
 );
 
 void main() async {
