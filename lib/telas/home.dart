@@ -62,6 +62,9 @@ class _HomeState extends State<Home> {
           throw CustomException("Não há usuário relacionado a esse e-mail.");
         case "wrong-password":
           throw CustomException("Senha incorreta.");
+        case "too-many-requests":
+          throw CustomException(
+              "Muitas tentativas incorretas de login.\nO acesso a essa conta foi temporariamente suspenso.\n\nVocê pode acessar sua conta imediatamente ao alterar sua senha na opção \"Esqueci a senha\" ou tentar novamente mais tarde.");
       }
     } catch (ex) {
       throw CustomException(ex.toString());
