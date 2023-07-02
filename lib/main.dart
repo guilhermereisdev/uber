@@ -29,8 +29,4 @@ void main() async {
     theme: temaPadrao,
     debugShowCheckedModeBanner: false,
   ));
-
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
 }
