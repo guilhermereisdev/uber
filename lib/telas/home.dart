@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../exception/custom_exception.dart';
@@ -18,6 +19,8 @@ class _HomeState extends State<Home> {
       TextEditingController(text: "11111111");
   bool _errorContainerVisibility = false;
   String _mensagemErro = "";
+  bool _loadingVisibility = false;
+  bool _passwordVisibility = true;
 
   bool _validarCampos() {
     if (_controllerEmail.text.isNotEmpty) {
@@ -31,18 +34,23 @@ class _HomeState extends State<Home> {
     }
   }
 
-  Future<bool> _logarUsuario() async {
+  Future<String?> _logarUsuario() async {
     Usuario usuario = Usuario();
     usuario.email = _controllerEmail.text;
     usuario.senha = _controllerSenha.text;
 
     try {
       FirebaseAuth auth = FirebaseAuth.instance;
-      await auth.signInWithEmailAndPassword(
+      final usuarioLogado = await auth.signInWithEmailAndPassword(
         email: usuario.email,
         password: usuario.senha,
       );
-      return Future.value(true);
+
+      if (usuarioLogado.user?.uid != null) {
+        return usuarioLogado.user?.uid;
+      } else {
+        throw CustomException("Usuário nulo.");
+      }
     } on FirebaseAuthException catch (ex) {
       switch (ex.code) {
         case "user-disabled":
@@ -58,135 +66,197 @@ class _HomeState extends State<Home> {
     } catch (ex) {
       throw CustomException(ex.toString());
     }
-    return Future.value(false);
+    throw CustomException("Função de logar usuário não foi executada.");
   }
 
   _abreTelaCadastro() => Navigator.pushNamed(context, "/cadastro");
 
-  _abreTelaInicialAreaLogada() =>
+  _abreTelaInicialAreaLogadaPassageiro() =>
       Navigator.pushReplacementNamed(context, "/painel-passageiro");
+
+  _abreTelaInicialAreaLogadaMotorista() =>
+      Navigator.pushReplacementNamed(context, "/painel-motorista");
+
+  _redirecionaParaTelaInicialLogadaPorTipoUsuario(String? idUsuario) async {
+    var db = FirebaseFirestore.instance;
+    DocumentSnapshot snapshot =
+        await db.collection("usuarios").doc(idUsuario).get();
+    var dados = snapshot.data() as Map<String, dynamic>;
+    String tipoUsuario = dados["tipoUsuario"];
+    switch (tipoUsuario) {
+      case "motorista":
+        _abreTelaInicialAreaLogadaMotorista();
+        break;
+      case "passageiro":
+        _abreTelaInicialAreaLogadaPassageiro();
+        break;
+    }
+  }
+
+  _exibirLoading(bool exibir) {
+    setState(() {
+      _loadingVisibility = exibir ? true : false;
+    });
+  }
+
+  _exibirMensagemErro(bool exibir, {String mensagem = ""}) {
+    setState(() {
+      _mensagemErro = mensagem;
+      _errorContainerVisibility = exibir ? true : false;
+    });
+  }
+
+  String? _verificaUsuarioLogado() {
+    var auth = FirebaseAuth.instance;
+    var usuarioLogado = auth.currentUser;
+    return usuarioLogado?.uid;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage("images/fundo.png"),
-            fit: BoxFit.cover,
+    String? idUsuario = _verificaUsuarioLogado();
+    if (idUsuario != null) {
+      _redirecionaParaTelaInicialLogadaPorTipoUsuario(idUsuario);
+      return const Scaffold();
+    } else {
+      return Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage("images/fundo.png"),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 32),
-                  child: Image.asset(
-                    "images/logo.png",
-                    width: 200,
-                    height: 150,
-                  ),
-                ),
-                TextField(
-                  controller: _controllerEmail,
-                  keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(fontSize: 20),
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                    hintText: "e-mail",
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
+          padding: const EdgeInsets.all(16),
+          child: Center(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 32),
+                    child: Image.asset(
+                      "images/logo.png",
+                      width: 200,
+                      height: 150,
                     ),
                   ),
-                ),
-                TextField(
-                  controller: _controllerSenha,
-                  obscureText: true,
-                  keyboardType: TextInputType.visiblePassword,
-                  style: const TextStyle(fontSize: 20),
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                    hintText: "senha",
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
+                  TextField(
+                    controller: _controllerEmail,
+                    keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(fontSize: 20),
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                      hintText: "e-mail",
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 16, bottom: 10),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      padding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
+                  TextField(
+                    controller: _controllerSenha,
+                    obscureText: _passwordVisibility,
+                    keyboardType: TextInputType.visiblePassword,
+                    style: const TextStyle(fontSize: 20),
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                      hintText: "senha",
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(_passwordVisibility
+                            ? Icons.visibility
+                            : Icons.visibility_off),
+                        onPressed: () {
+                          setState(
+                            () {
+                              _passwordVisibility = !_passwordVisibility;
+                            },
+                          );
+                        },
+                      ),
                     ),
-                    onPressed: () async {
-                      setState(() {
-                        _mensagemErro = "";
-                        _errorContainerVisibility = false;
-                      });
-                      try {
-                        if (_validarCampos()) {
-                          if (await _logarUsuario()) {
-                            _abreTelaInicialAreaLogada();
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16, bottom: 10),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        padding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
+                      ),
+                      onPressed: () async {
+                        _exibirLoading(true);
+                        _exibirMensagemErro(false);
+                        try {
+                          if (_validarCampos()) {
+                            await _redirecionaParaTelaInicialLogadaPorTipoUsuario(
+                                await _logarUsuario());
                           }
+                        } catch (ex) {
+                          _exibirLoading(false);
+                          _exibirMensagemErro(true, mensagem: ex.toString());
                         }
-                      } catch (ex) {
-                        setState(() {
-                          _mensagemErro = ex.toString();
-                          _errorContainerVisibility = true;
-                        });
-                      }
-                    },
-                    child: const Text(
-                      "Entrar",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
+                      },
+                      child: const Text(
+                        "Entrar",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Center(
-                  child: GestureDetector(
-                    child: const Text(
-                      "Não tem conta? Cadastre-se!",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    onTap: () {
-                      _abreTelaCadastro();
-                    },
-                  ),
-                ),
-                Visibility(
-                  visible: _errorContainerVisibility,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
+                  Center(
+                    child: GestureDetector(
+                      child: const Text(
+                        "Não tem conta? Cadastre-se!",
+                        style: TextStyle(color: Colors.white),
                       ),
-                      color: Colors.red,
-                      child: Text(
-                        _mensagemErro,
-                        style: const TextStyle(color: Colors.white),
-                        textAlign: TextAlign.center,
+                      onTap: () {
+                        _abreTelaCadastro();
+                      },
+                    ),
+                  ),
+                  Visibility(
+                    visible: _loadingVisibility,
+                    child: const Padding(
+                      padding: EdgeInsets.only(top: 16),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          backgroundColor: Colors.white,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                  Visibility(
+                    visible: _errorContainerVisibility,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        color: Colors.red,
+                        child: Text(
+                          _mensagemErro,
+                          style: const TextStyle(color: Colors.white),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    }
   }
 }
