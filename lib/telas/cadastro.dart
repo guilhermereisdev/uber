@@ -147,17 +147,30 @@ class _CadastroState extends State<Cadastro> {
                 ),
                 TextField(
                   controller: _controllerSenha,
-                  obscureText: true,
+                  obscureText: _passwordVisibility,
                   keyboardType: TextInputType.visiblePassword,
                   style: const TextStyle(fontSize: 20),
                   decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                      hintText: "senha",
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      )),
+                    contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                    hintText: "senha",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(_passwordVisibility
+                          ? Icons.visibility
+                          : Icons.visibility_off),
+                      onPressed: () {
+                        setState(
+                          () {
+                            _passwordVisibility = !_passwordVisibility;
+                          },
+                        );
+                      },
+                    ),
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: 24),
