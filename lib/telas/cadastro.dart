@@ -18,6 +18,8 @@ class _CadastroState extends State<Cadastro> {
   bool _tipoUsuario = false;
   bool _errorContainerVisibility = false;
   String _mensagemErro = "";
+  bool _loadingVisibility = false;
+  bool _passwordVisibility = true;
 
   bool _validarCampos() {
     if (_controllerNome.text.isNotEmpty) {
@@ -90,6 +92,19 @@ class _CadastroState extends State<Cadastro> {
           );
   }
 
+  _exibirLoading(bool exibir) {
+    setState(() {
+      _loadingVisibility = exibir ? true : false;
+    });
+  }
+
+  _exibirMensagemErro(bool exibir, {String mensagem = ""}) {
+    setState(() {
+      _mensagemErro = mensagem;
+      _errorContainerVisibility = exibir ? true : false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,27 +136,41 @@ class _CadastroState extends State<Cadastro> {
                   keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(fontSize: 20),
                   decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                      hintText: "e-mail",
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      )),
+                    contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                    hintText: "e-mail",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
                 ),
                 TextField(
                   controller: _controllerSenha,
-                  obscureText: true,
+                  obscureText: _passwordVisibility,
                   keyboardType: TextInputType.visiblePassword,
                   style: const TextStyle(fontSize: 20),
                   decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                      hintText: "senha",
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      )),
+                    contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                    hintText: "senha",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(_passwordVisibility
+                          ? Icons.visibility
+                          : Icons.visibility_off),
+                      onPressed: () {
+                        setState(
+                          () {
+                            _passwordVisibility = !_passwordVisibility;
+                          },
+                        );
+                      },
+                    ),
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: 24),
@@ -177,10 +206,8 @@ class _CadastroState extends State<Cadastro> {
                       padding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
                     ),
                     onPressed: () async {
-                      setState(() {
-                        _mensagemErro = "";
-                        _errorContainerVisibility = false;
-                      });
+                      _exibirLoading(true);
+                      _exibirMensagemErro(false);
                       try {
                         if (_validarCampos()) {
                           if (await _cadastrarUsuario()) {
@@ -188,10 +215,8 @@ class _CadastroState extends State<Cadastro> {
                           }
                         }
                       } catch (ex) {
-                        setState(() {
-                          _mensagemErro = ex.toString();
-                          _errorContainerVisibility = true;
-                        });
+                        _exibirLoading(false);
+                        _exibirMensagemErro(true, mensagem: ex.toString());
                       }
                     },
                     child: const Text(
@@ -199,6 +224,17 @@ class _CadastroState extends State<Cadastro> {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
+                      ),
+                    ),
+                  ),
+                ),
+                Visibility(
+                  visible: _loadingVisibility,
+                  child: const Padding(
+                    padding: EdgeInsets.only(top: 16),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        backgroundColor: Colors.white,
                       ),
                     ),
                   ),
