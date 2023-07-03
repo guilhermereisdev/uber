@@ -13,7 +13,7 @@ class PainelPassageiro extends StatefulWidget {
 }
 
 class _PainelPassageiroState extends State<PainelPassageiro> {
-  Completer<GoogleMapController> _controller = Completer();
+  final Completer<GoogleMapController> _controller = Completer();
   CameraPosition _cameraPosition = const CameraPosition(
     target: LatLng(-23.563999, -46.653256),
   );
@@ -153,11 +153,102 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
                 ],
               ),
             )
-          : GoogleMap(
-              mapType: MapType.normal,
-              initialCameraPosition: _cameraPosition,
-              onMapCreated: _onMapCreated,
-              myLocationEnabled: true,
+          : Stack(
+              children: [
+                GoogleMap(
+                  mapType: MapType.normal,
+                  initialCameraPosition: _cameraPosition,
+                  onMapCreated: _onMapCreated,
+                  // myLocationEnabled: true,
+                  myLocationButtonEnabled: false,
+                  markers: _marcadores,
+                ),
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Container(
+                      height: 50,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(3),
+                        color: Colors.white,
+                      ),
+                      child: TextField(
+                        readOnly: true,
+                        decoration: InputDecoration(
+                            icon: Container(
+                              margin: const EdgeInsets.only(left: 16),
+                              child: const Icon(
+                                Icons.location_on,
+                                color: Colors.green,
+                              ),
+                            ),
+                            hintText: "Meu local",
+                            border: InputBorder.none,
+                            contentPadding:
+                                const EdgeInsets.only(left: 0, top: 0)),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 55,
+                  left: 0,
+                  right: 0,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Container(
+                      height: 50,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(3),
+                        color: Colors.white,
+                      ),
+                      child: TextField(
+                        decoration: InputDecoration(
+                            icon: Container(
+                              margin: const EdgeInsets.only(left: 16),
+                              child: const Icon(
+                                Icons.local_taxi,
+                                color: Colors.black,
+                              ),
+                            ),
+                            hintText: "Digite o destino",
+                            border: InputBorder.none,
+                            contentPadding:
+                                const EdgeInsets.only(left: 0, top: 0)),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 0,
+                  left: 0,
+                  bottom: 0,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        padding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
+                      ),
+                      onPressed: () {},
+                      child: const Text(
+                        "Chamar Uber",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
     );
   }
