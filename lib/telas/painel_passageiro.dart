@@ -18,6 +18,7 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
     target: LatLng(-23.563999, -46.653256),
   );
   bool _isLoading = true;
+  final Set<Marker> _marcadores = {};
 
   @override
   void initState() {
@@ -83,6 +84,7 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
     Position? position = await Geolocator.getLastKnownPosition();
     setState(() {
       if (position != null) {
+        _exibirMarcadorPassageiro(position);
         _cameraPosition = CameraPosition(
           target: LatLng(position.latitude, position.longitude),
           zoom: 19,
@@ -105,11 +107,31 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
     );
     Geolocator.getPositionStream(locationSettings: locationSettings)
         .listen((position) {
+      _exibirMarcadorPassageiro(position);
       _cameraPosition = CameraPosition(
         target: LatLng(position.latitude, position.longitude),
         zoom: 19,
       );
       _movimentarCamera(_cameraPosition);
+    });
+  }
+
+  _exibirMarcadorPassageiro(Position position) async {
+    double pixelRatio = MediaQuery.of(context).devicePixelRatio;
+
+    BitmapDescriptor.fromAssetImage(
+      ImageConfiguration(devicePixelRatio: pixelRatio),
+      "images/passageiro.png",
+    ).then((icone) {
+      Marker marcadorPassageiro = Marker(
+        markerId: const MarkerId("marcador-passageiro"),
+        position: LatLng(position.latitude, position.longitude),
+        infoWindow: const InfoWindow(title: "Meu local"),
+        icon: icone,
+      );
+      setState(() {
+        _marcadores.add(marcadorPassageiro);
+      });
     });
   }
 
