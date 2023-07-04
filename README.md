@@ -1,5 +1,7 @@
 # Uber
 
+Ainda em desenvolvimento. Em breve mais informações.
+
 Clone do aplicativo de mobilidade urbana Uber. Feito em Flutter.
 
 Autor: Guilherme Reis - [LinkedIn](https://www.linkedin.com/in/guilhermereisdev/)
