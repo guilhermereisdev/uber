@@ -23,6 +23,8 @@ class Requisicao {
       "numero": destino.numero,
       "bairro": destino.bairro,
       "cep": destino.cep,
+      "cidade": destino.cidade,
+      "estado": destino.estado,
       "latitude": destino.latitude,
       "longitude": destino.longitude,
     };
