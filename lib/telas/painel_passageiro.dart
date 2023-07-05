@@ -34,6 +34,7 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
   String _textoBotao = "Chamar Uber";
   Color _corBotao = Colors.black;
   Function _funcaoBotao = () {};
+  String? _idRequisicao;
 
   @override
   void initState() {
@@ -199,7 +200,16 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
     }
   }
 
-  _cancelarUber() {}
+  _cancelarUber() async {
+    User? user = await UsuarioFirebase.getUsuarioAtual();
+    FirebaseFirestore db = FirebaseFirestore.instance;
+    db
+        .collection("requisicoes")
+        .doc(_idRequisicao)
+        .update({"status": StatusRequisicao.cancelada}).then((_) {
+      db.collection("requisicao_ativa").doc(user?.uid).delete();
+    });
+  }
 
   _exibeAlertSimplesDeErro(String mensagem, {String titulo = ""}) {
     Widget? titleText = titulo.isEmpty ? null : Text(titulo);
@@ -335,7 +345,7 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
       if (event.data() != null) {
         var dados = event.data() as Map<String, dynamic>;
         String status = dados["status"];
-        String idRequisicao = dados["id_requisicao"];
+        _idRequisicao = dados["id_requisicao"];
 
         switch (status) {
           case StatusRequisicao.aguardando:
