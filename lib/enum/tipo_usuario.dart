@@ -1,15 +1,4 @@
-enum TipoUsuario {
-  passageiro,
-  motorista,
-}
-
-extension TipoUsuarioExtension on TipoUsuario {
-  String get value {
-    switch (this) {
-      case TipoUsuario.passageiro:
-        return "passageiro";
-      case TipoUsuario.motorista:
-        return "motorista";
-    }
-  }
+class TipoUsuario {
+  static const String passageiro = "passageiro";
+  static const String motorista = "motorista";
 }
