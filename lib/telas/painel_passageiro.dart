@@ -39,7 +39,7 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
   void initState() {
     super.initState();
     _inicializarTelaAposChecarPermissoes();
-    _statusUberNaoChamado();
+    _adicionarListenerRequisicaoAtiva();
   }
 
   Future<void> _inicializarTelaAposChecarPermissoes() async {
@@ -232,12 +232,22 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
     Requisicao requisicao = Requisicao();
     requisicao.destino = destino;
     requisicao.passageiro = passageiro;
-    requisicao.status = StatusRequisicao.aguardando.value;
+    requisicao.status = StatusRequisicao.aguardando;
 
+    // Salvar requisição
     FirebaseFirestore db = FirebaseFirestore.instance;
-    db.collection("requisicoes").add(requisicao.toMap());
+    db.collection("requisicoes").doc(requisicao.id).set(requisicao.toMap());
 
-    _statusAguardando();
+    // Salvar requisição ativa
+    Map<String, dynamic> dadosRequisicaoAtiva = {};
+    dadosRequisicaoAtiva["id_requisicao"] = requisicao.id;
+    dadosRequisicaoAtiva["id_usuario"] = passageiro.idUsuario;
+    dadosRequisicaoAtiva["status"] = StatusRequisicao.aguardando;
+
+    db
+        .collection("requisicao_ativa")
+        .doc(passageiro.idUsuario)
+        .set(dadosRequisicaoAtiva);
   }
 
   Future<bool> _confirmarEndereco(Destino destino) async {
@@ -312,6 +322,36 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
         _cancelarUber();
       },
     );
+  }
+
+  _adicionarListenerRequisicaoAtiva() async {
+    User? user = await UsuarioFirebase.getUsuarioAtual();
+    FirebaseFirestore db = FirebaseFirestore.instance;
+    await db
+        .collection("requisicao_ativa")
+        .doc(user?.uid)
+        .snapshots()
+        .listen((event) {
+      if (event.data() != null) {
+        var dados = event.data() as Map<String, dynamic>;
+        String status = dados["status"];
+        String idRequisicao = dados["id_requisicao"];
+
+        switch (status) {
+          case StatusRequisicao.aguardando:
+            _statusAguardando();
+            break;
+          case StatusRequisicao.aCaminho:
+            break;
+          case StatusRequisicao.finalizada:
+            break;
+          case StatusRequisicao.viagem:
+            break;
+        }
+      } else {
+        _statusUberNaoChamado();
+      }
+    });
   }
 
   @override
