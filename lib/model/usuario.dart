@@ -19,5 +19,5 @@ class Usuario {
   }
 
   String verificaTipoUsuario(bool tipoUsuario) =>
-      tipoUsuario ? TipoUsuario.motorista.value : TipoUsuario.passageiro.value;
+      tipoUsuario ? TipoUsuario.motorista : TipoUsuario.passageiro;
 }
