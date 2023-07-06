@@ -6,6 +6,8 @@ class Usuario {
   late String email;
   late String senha;
   late String tipoUsuario;
+  double? latitude;
+  double? longitude;
 
   Usuario();
 
@@ -14,6 +16,8 @@ class Usuario {
       "nome": nome,
       "email": email,
       "tipoUsuario": tipoUsuario,
+      "latitude": latitude,
+      "longitude": longitude,
     };
     return map;
   }
