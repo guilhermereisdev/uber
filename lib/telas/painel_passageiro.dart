@@ -35,6 +35,7 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
   Color _corBotao = Colors.black;
   Function _funcaoBotao = () {};
   String? _idRequisicao;
+  Position? _localPassageiro;
 
   @override
   void initState() {
@@ -106,6 +107,7 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
           target: LatLng(position.latitude, position.longitude),
           zoom: 19,
         );
+        _localPassageiro = position;
         _movimentarCamera(_cameraPosition);
       }
     });
@@ -129,6 +131,7 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
         target: LatLng(position.latitude, position.longitude),
         zoom: 19,
       );
+      _localPassageiro = position;
       _movimentarCamera(_cameraPosition);
     });
   }
@@ -238,6 +241,8 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
 
   _salvarRequisicao(Destino destino) async {
     Usuario passageiro = await UsuarioFirebase.getDadosUsuarioLogado();
+    passageiro.latitude = _localPassageiro?.latitude;
+    passageiro.longitude = _localPassageiro?.longitude;
 
     Requisicao requisicao = Requisicao();
     requisicao.destino = destino;
@@ -343,10 +348,10 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
     );
   }
 
-  _adicionarListenerRequisicaoAtiva() async {
-    User? user = await UsuarioFirebase.getUsuarioAtual();
+  _adicionarListenerRequisicaoAtiva() {
+    User? user = UsuarioFirebase.getUsuarioAtual();
     FirebaseFirestore db = FirebaseFirestore.instance;
-    await db
+    db
         .collection("requisicao_ativa")
         .doc(user?.uid)
         .snapshots()
