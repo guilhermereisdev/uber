@@ -54,7 +54,7 @@ class _CorridaState extends State<Corrida> {
         target: LatLng(position.latitude, position.longitude),
         zoom: 19,
       );
-      _movimentarCamera(_cameraPosition);
+      // _movimentarCamera(_cameraPosition);
       setState(() {
         _localMotorista = position;
       });
@@ -70,7 +70,7 @@ class _CorridaState extends State<Corrida> {
           target: LatLng(position.latitude, position.longitude),
           zoom: 19,
         );
-        _movimentarCamera(_cameraPosition);
+        // _movimentarCamera(_cameraPosition);
         _localMotorista = position;
       }
     });
@@ -134,6 +134,12 @@ class _CorridaState extends State<Corrida> {
     });
   }
 
+  _movimentarCameraBounds(LatLngBounds latLngBounds) async {
+    GoogleMapController googleMapController = await _controller.future;
+    googleMapController
+        .animateCamera(CameraUpdate.newLatLngBounds(latLngBounds, 100));
+  }
+
   _statusAguardando() {
     _alteraBotaoPrincipal(
       "Aceitar corrida",
@@ -153,6 +159,30 @@ class _CorridaState extends State<Corrida> {
     _exibirDoisMarcadores(
       LatLng(latitudeMotorista, longitudeMotorista),
       LatLng(latitudePassageiro, longitudePassageiro),
+    );
+
+    double nLat, nLon, sLat, sLon;
+    if (latitudeMotorista <= latitudePassageiro) {
+      sLat = latitudeMotorista;
+      nLat = latitudePassageiro;
+    } else {
+      sLat = latitudePassageiro;
+      nLat = latitudeMotorista;
+    }
+
+    if (longitudeMotorista <= longitudePassageiro) {
+      sLon = longitudeMotorista;
+      nLon = longitudePassageiro;
+    } else {
+      sLon = longitudePassageiro;
+      nLon = longitudeMotorista;
+    }
+
+    _movimentarCameraBounds(
+      LatLngBounds(
+        southwest: LatLng(sLat, sLon),
+        northeast: LatLng(nLat, nLon),
+      ),
     );
   }
 
@@ -188,15 +218,6 @@ class _CorridaState extends State<Corrida> {
 
     setState(() {
       _marcadores = listaMarcadores;
-      _movimentarCamera(
-        CameraPosition(
-          target: LatLng(
-            latLngMotorista.latitude,
-            latLngMotorista.longitude,
-          ),
-          zoom: 18,
-        ),
-      );
     });
   }
 
