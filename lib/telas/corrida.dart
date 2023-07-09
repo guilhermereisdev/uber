@@ -23,7 +23,7 @@ class _CorridaState extends State<Corrida> {
   CameraPosition _cameraPosition = const CameraPosition(
     target: LatLng(-23.563999, -46.653256),
   );
-  final Set<Marker> _marcadores = {};
+  Set<Marker> _marcadores = {};
   Map<String, dynamic>? _dadosRequisicao;
   Position? _localMotorista;
   String _textoBotao = "Aceitar corrida";
@@ -54,7 +54,7 @@ class _CorridaState extends State<Corrida> {
         target: LatLng(position.latitude, position.longitude),
         zoom: 19,
       );
-      _movimentarCamera(_cameraPosition);
+      // _movimentarCamera(_cameraPosition);
       setState(() {
         _localMotorista = position;
       });
@@ -70,7 +70,7 @@ class _CorridaState extends State<Corrida> {
           target: LatLng(position.latitude, position.longitude),
           zoom: 19,
         );
-        _movimentarCamera(_cameraPosition);
+        // _movimentarCamera(_cameraPosition);
         _localMotorista = position;
       }
     });
@@ -134,6 +134,12 @@ class _CorridaState extends State<Corrida> {
     });
   }
 
+  _movimentarCameraBounds(LatLngBounds latLngBounds) async {
+    GoogleMapController googleMapController = await _controller.future;
+    googleMapController
+        .animateCamera(CameraUpdate.newLatLngBounds(latLngBounds, 100));
+  }
+
   _statusAguardando() {
     _alteraBotaoPrincipal(
       "Aceitar corrida",
@@ -146,6 +152,73 @@ class _CorridaState extends State<Corrida> {
 
   _statusACaminho() {
     _alteraBotaoPrincipal("A caminho do passageiro", Colors.grey, () {});
+    double latitudePassageiro = _dadosRequisicao?["passageiro"]["latitude"];
+    double longitudePassageiro = _dadosRequisicao?["passageiro"]["longitude"];
+    double latitudeMotorista = _dadosRequisicao?["motorista"]["latitude"];
+    double longitudeMotorista = _dadosRequisicao?["motorista"]["longitude"];
+    _exibirDoisMarcadores(
+      LatLng(latitudeMotorista, longitudeMotorista),
+      LatLng(latitudePassageiro, longitudePassageiro),
+    );
+
+    double nLat, nLon, sLat, sLon;
+    if (latitudeMotorista <= latitudePassageiro) {
+      sLat = latitudeMotorista;
+      nLat = latitudePassageiro;
+    } else {
+      sLat = latitudePassageiro;
+      nLat = latitudeMotorista;
+    }
+
+    if (longitudeMotorista <= longitudePassageiro) {
+      sLon = longitudeMotorista;
+      nLon = longitudePassageiro;
+    } else {
+      sLon = longitudePassageiro;
+      nLon = longitudeMotorista;
+    }
+
+    _movimentarCameraBounds(
+      LatLngBounds(
+        southwest: LatLng(sLat, sLon),
+        northeast: LatLng(nLat, nLon),
+      ),
+    );
+  }
+
+  _exibirDoisMarcadores(LatLng latLngMotorista, LatLng latLngPassageiro) {
+    double pixelRatio = MediaQuery.of(context).devicePixelRatio;
+    Set<Marker> listaMarcadores = {};
+
+    BitmapDescriptor.fromAssetImage(
+      ImageConfiguration(devicePixelRatio: pixelRatio),
+      "images/motorista.png",
+    ).then((icone) {
+      Marker marcadorMotorista = Marker(
+        markerId: const MarkerId("marcador-motorista"),
+        position: LatLng(latLngMotorista.latitude, latLngMotorista.longitude),
+        infoWindow: const InfoWindow(title: "Local motorista"),
+        icon: icone,
+      );
+      listaMarcadores.add(marcadorMotorista);
+    });
+
+    BitmapDescriptor.fromAssetImage(
+      ImageConfiguration(devicePixelRatio: pixelRatio),
+      "images/passageiro.png",
+    ).then((icone) {
+      Marker marcadorPassageiro = Marker(
+        markerId: const MarkerId("marcador-passageiro"),
+        position: LatLng(latLngPassageiro.latitude, latLngPassageiro.longitude),
+        infoWindow: const InfoWindow(title: "Local passageiro"),
+        icon: icone,
+      );
+      listaMarcadores.add(marcadorPassageiro);
+    });
+
+    setState(() {
+      _marcadores = listaMarcadores;
+    });
   }
 
   _aceitarCorrida() async {
