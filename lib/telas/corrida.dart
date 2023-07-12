@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:uber/exception/custom_null_exception.dart';
 import 'package:uber/model/usuario.dart';
 import 'package:uber/util/usuario_firebase.dart';
 
@@ -57,19 +58,28 @@ class _CorridaState extends State<Corrida> {
           if (_statusRequisicao != StatusRequisicao.aguardando) {
             UsuarioFirebase.atualizarDadosLocalizacao(
                 _idRequisicao!, position.latitude, position.longitude);
+          } else {
+            setState(() {
+              _localMotorista = position;
+            });
+            _statusAguardando();
           }
-        } else {
-          setState(() {
-            _localMotorista = position;
-          });
+        } else if (_idRequisicao == null) {
+          CustomNullException("_idRequisicao", "_adicionarListenerLocalizacao");
         }
+      } else {
+        CustomNullException("position", "_adicionarListenerLocalizacao");
       }
     });
   }
 
   _recuperaUltimaLocalizacaoConhecida() async {
     Position? position = await Geolocator.getLastKnownPosition();
-    if (position != null) {}
+    setState(() {
+      if (position != null) {
+        _localMotorista = position;
+      }
+    });
   }
 
   _movimentarCamera(CameraPosition cameraPosition) async {
@@ -86,7 +96,7 @@ class _CorridaState extends State<Corrida> {
       icone,
     ).then((bitmapDescriptor) {
       Marker marcador = Marker(
-        markerId: MarkerId(bitmapDescriptor as String),
+        markerId: MarkerId(icone),
         position: LatLng(position.latitude, position.longitude),
         infoWindow: InfoWindow(title: infoWindow),
         icon: bitmapDescriptor,
@@ -106,7 +116,11 @@ class _CorridaState extends State<Corrida> {
 
   _adicionarListenerRequisicao() async {
     FirebaseFirestore db = FirebaseFirestore.instance;
-    await db.collection("requisicoes").doc(_idRequisicao).snapshots().listen((event) {
+    await db
+        .collection("requisicoes")
+        .doc(_idRequisicao)
+        .snapshots()
+        .listen((event) {
       if (event.data() != null) {
         _dadosRequisicao = event.data();
 
@@ -166,6 +180,8 @@ class _CorridaState extends State<Corrida> {
         zoom: 19,
       );
       _movimentarCamera(cameraPosition);
+    } else {
+      throw CustomNullException("localMotorista", "_statusAguardando");
     }
   }
 
@@ -208,7 +224,28 @@ class _CorridaState extends State<Corrida> {
     );
   }
 
-  _iniciarCorrida() {}
+  _iniciarCorrida() async {
+    FirebaseFirestore db = FirebaseFirestore.instance;
+    await db.collection("requisicoes").doc(_idRequisicao).update({
+      "origem": {
+        "latitude": _dadosRequisicao?["motorista"]["latitude"],
+        "longitude": _dadosRequisicao?["motorista"]["longitude"],
+      },
+      "status": StatusRequisicao.viagem
+    });
+
+    String idPassageiro = _dadosRequisicao?["passageiro"]["idUsuario"];
+    await db
+        .collection("requisicao_ativa")
+        .doc(idPassageiro)
+        .update({"status": StatusRequisicao.viagem});
+
+    String idMotorista = _dadosRequisicao?["motorista"]["idUsuario"];
+    await db
+        .collection("requisicao_ativa_motorista")
+        .doc(idMotorista)
+        .update({"status": StatusRequisicao.viagem});
+  }
 
   _exibirDoisMarcadores(LatLng latLngMotorista, LatLng latLngPassageiro) {
     double pixelRatio = MediaQuery.of(context).devicePixelRatio;
@@ -247,21 +284,21 @@ class _CorridaState extends State<Corrida> {
 
   _aceitarCorrida() async {
     Usuario motorista = await UsuarioFirebase.getDadosUsuarioLogado();
-    motorista.latitude = _dadosRequisicao?["motorista"]["latitude"];
-    motorista.longitude = _dadosRequisicao?["motorista"]["longitude"];
+    motorista.latitude = _localMotorista?.latitude;
+    motorista.longitude = _localMotorista?.longitude;
 
     FirebaseFirestore db = FirebaseFirestore.instance;
     String idRequisicao = _dadosRequisicao?["id"];
-    db.collection("requisicoes").doc(idRequisicao).update({
+    await db.collection("requisicoes").doc(idRequisicao).update({
       "motorista": motorista.toMap(),
       "status": StatusRequisicao.aCaminho,
-    }).then((_) {
+    }).then((_) async {
       String idPassageiro = _dadosRequisicao?["passageiro"]["idUsuario"];
-      db.collection("requisicao_ativa").doc(idPassageiro).update({
+      await db.collection("requisicao_ativa").doc(idPassageiro).update({
         "status": StatusRequisicao.aCaminho,
       });
       String idMotorista = motorista.idUsuario;
-      db.collection("requisicao_ativa_motorista").doc(idMotorista).set({
+      await db.collection("requisicao_ativa_motorista").doc(idMotorista).set({
         "id_requisicao": idRequisicao,
         "id_usuario": idMotorista,
         "status": StatusRequisicao.aCaminho,
@@ -273,8 +310,8 @@ class _CorridaState extends State<Corrida> {
   void initState() {
     super.initState();
     _idRequisicao = widget.idRequisicao;
+    _recuperaUltimaLocalizacaoConhecida();
     _adicionarListenerRequisicao();
-    // _recuperaUltimaLocalizacaoConhecida();
     _adicionarListenerLocalizacao();
     // _recuperaRequisicao();
   }

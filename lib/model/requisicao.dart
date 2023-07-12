@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:uber/model/usuario.dart';
 import 'package:uber/model/destino.dart';
+import 'package:uber/model/usuario.dart';
 
 class Requisicao {
   late String id;
