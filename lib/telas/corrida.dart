@@ -116,7 +116,7 @@ class _CorridaState extends State<Corrida> {
 
   _adicionarListenerRequisicao() async {
     FirebaseFirestore db = FirebaseFirestore.instance;
-    await db
+    db
         .collection("requisicoes")
         .doc(_idRequisicao)
         .snapshots()

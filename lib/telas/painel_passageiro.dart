@@ -485,7 +485,7 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
 
   _adicionarListenerRequisicao(String idRequisicao) async {
     FirebaseFirestore db = FirebaseFirestore.instance;
-    _streamSubscriptionRequisicoes = await db
+    _streamSubscriptionRequisicoes = db
         .collection("requisicoes")
         .doc(idRequisicao)
         .snapshots()
