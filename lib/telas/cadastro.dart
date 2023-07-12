@@ -55,8 +55,8 @@ class _CadastroState extends State<Cadastro> {
       await auth
           .createUserWithEmailAndPassword(
               email: usuario.email, password: usuario.senha)
-          .then((firebaseUser) => {
-                db
+          .then((firebaseUser) async => {
+                await db
                     .collection("usuarios")
                     .doc(firebaseUser.user?.uid)
                     .set(usuario.toMap())

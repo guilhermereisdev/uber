@@ -1,16 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:uber/exception/custom_null_exception.dart';
 import 'package:uber/model/usuario.dart';
 
 class UsuarioFirebase {
-  static User? getUsuarioAtual() {
+  static Future<User?> getUsuarioAtual() async {
     FirebaseAuth auth = FirebaseAuth.instance;
     return auth.currentUser;
   }
 
   static Future<Usuario> getDadosUsuarioLogado() async {
     Usuario usuario = Usuario();
-    User? user = getUsuarioAtual();
+    User? user = await getUsuarioAtual();
     if (user != null) {
       String idUsuario = user.uid;
 
@@ -27,6 +28,8 @@ class UsuarioFirebase {
       usuario.tipoUsuario = tipoUsuario;
       usuario.email = email;
       usuario.nome = nome;
+    } else {
+      CustomNullException("user", "getDadosUsuarioLogado");
     }
     return usuario;
   }
@@ -39,7 +42,7 @@ class UsuarioFirebase {
     motorista.latitude = lat;
     motorista.longitude = lon;
 
-    db
+    await db
         .collection("requisicoes")
         .doc(idRequisicao)
         .update({"motorista": motorista.toMap()});
