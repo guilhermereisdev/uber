@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:uber/enum/status_requisicao.dart';
 import 'package:uber/exception/custom_exception.dart';
+import 'package:uber/exception/custom_null_exception.dart';
 import 'package:uber/model/destino.dart';
 import 'package:uber/model/requisicao.dart';
 import 'package:uber/model/usuario.dart';
@@ -37,13 +38,14 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
   String? _idRequisicao;
   Position? _localPassageiro;
   Map<String, dynamic>? _dadosRequisicao;
+  StreamSubscription<DocumentSnapshot>? _streamSubscriptionRequisicoes;
 
   Future<void> _inicializarTelaAposChecarPermissoes() async {
     bool permissaoConcedida = await _checaPermissoesDeLocalizacao();
 
     if (permissaoConcedida) {
       print("permissão concedida: $permissaoConcedida");
-      // _recuperaUltimaLocalizacaoConhecida();
+      _recuperaUltimaLocalizacaoConhecida();
       _adicionarListenerLocalizacao();
     }
     setState(() {
@@ -96,7 +98,9 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
   _recuperaUltimaLocalizacaoConhecida() async {
     Position? position = await Geolocator.getLastKnownPosition();
     setState(() {
-      if (position != null) {}
+      if (position != null) {
+        _localPassageiro = position;
+      }
     });
   }
 
@@ -198,14 +202,14 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
     }
   }
 
-  _cancelarUber() {
-    User? user = UsuarioFirebase.getUsuarioAtual();
+  _cancelarUber() async {
+    User? user = await UsuarioFirebase.getUsuarioAtual();
     FirebaseFirestore db = FirebaseFirestore.instance;
-    db
+    await db
         .collection("requisicoes")
         .doc(_idRequisicao)
-        .update({"status": StatusRequisicao.cancelada}).then((_) {
-      db.collection("requisicao_ativa").doc(user?.uid).delete();
+        .update({"status": StatusRequisicao.cancelada}).then((_) async {
+      await db.collection("requisicao_ativa").doc(user?.uid).delete();
     });
   }
 
@@ -246,7 +250,7 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
 
     // Salvar requisição
     FirebaseFirestore db = FirebaseFirestore.instance;
-    db.collection("requisicoes").doc(requisicao.id).set(requisicao.toMap());
+    await db.collection("requisicoes").doc(requisicao.id).set(requisicao.toMap());
 
     // Salvar requisição ativa
     Map<String, dynamic> dadosRequisicaoAtiva = {};
@@ -254,12 +258,14 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
     dadosRequisicaoAtiva["id_usuario"] = passageiro.idUsuario;
     dadosRequisicaoAtiva["status"] = StatusRequisicao.aguardando;
 
-    db
+    await db
         .collection("requisicao_ativa")
         .doc(passageiro.idUsuario)
         .set(dadosRequisicaoAtiva);
 
-    _statusAguardando();
+    if (_streamSubscriptionRequisicoes == null) {
+      _adicionarListenerRequisicao(requisicao.id);
+    }
   }
 
   Future<bool> _confirmarEndereco(Destino destino) async {
@@ -342,6 +348,8 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
       );
 
       _movimentarCamera(cameraPosition);
+    } else {
+      CustomNullException("localPassageiro", "_statusUberNaoChamado");
     }
   }
 
@@ -458,9 +466,8 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
         .animateCamera(CameraUpdate.newLatLngBounds(latLngBounds, 100));
   }
 
-
   _recuperarRequisicaoAtiva() async {
-    User? user = UsuarioFirebase.getUsuarioAtual();
+    User? user = await UsuarioFirebase.getUsuarioAtual();
     FirebaseFirestore db = FirebaseFirestore.instance;
     DocumentSnapshot documentSnapshot =
         await db.collection("requisicao_ativa").doc(user?.uid).get();
@@ -476,9 +483,9 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
     }
   }
 
-  _adicionarListenerRequisicao(String idRequisicao) {
+  _adicionarListenerRequisicao(String idRequisicao) async {
     FirebaseFirestore db = FirebaseFirestore.instance;
-    db
+    _streamSubscriptionRequisicoes = await db
         .collection("requisicoes")
         .doc(idRequisicao)
         .snapshots()
@@ -660,5 +667,11 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
               ],
             ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _streamSubscriptionRequisicoes?.cancel();
   }
 }

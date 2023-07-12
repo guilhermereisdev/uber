@@ -18,6 +18,7 @@ class PainelMotorista extends StatefulWidget {
 class _PainelMotoristaState extends State<PainelMotorista> {
   FirebaseFirestore db = FirebaseFirestore.instance;
   final _controller = StreamController<QuerySnapshot>.broadcast();
+  StreamSubscription<QuerySnapshot>? _streamSubscriptionRequisicoes;
 
   Future<bool> _deslogarUsuario() async {
     try {
@@ -31,12 +32,12 @@ class _PainelMotoristaState extends State<PainelMotorista> {
 
   _abreTelaLogin() => Navigator.pushReplacementNamed(context, "/");
 
-  _adicionarListenerRequisicoes() {
-    final stream = db
+  _adicionarListenerRequisicoes() async {
+    _streamSubscriptionRequisicoes = await db
         .collection("requisicoes")
         .where("status", isEqualTo: StatusRequisicao.aguardando)
-        .snapshots();
-    stream.listen((event) {
+        .snapshots()
+        .listen((event) {
       _controller.add(event);
     });
   }
@@ -164,5 +165,11 @@ class _PainelMotoristaState extends State<PainelMotorista> {
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _streamSubscriptionRequisicoes?.cancel();
   }
 }
