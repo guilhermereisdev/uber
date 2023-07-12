@@ -25,10 +25,13 @@ class _CorridaState extends State<Corrida> {
   );
   Set<Marker> _marcadores = {};
   Map<String, dynamic>? _dadosRequisicao;
-  Position? _localMotorista;
   String _textoBotao = "Aceitar corrida";
   Color _corBotao = Colors.black;
   Function _funcaoBotao = () {};
+  String _mensagemStatus = "";
+  String? _idRequisicao;
+  Position? _localMotorista;
+  String _statusRequisicao = StatusRequisicao.aguardando;
 
   _alteraBotaoPrincipal(String texto, Color cor, Function funcao) {
     setState(() {
@@ -49,31 +52,24 @@ class _CorridaState extends State<Corrida> {
     );
     Geolocator.getPositionStream(locationSettings: locationSettings)
         .listen((position) {
-      _exibirMarcadorPassageiro(position);
-      _cameraPosition = CameraPosition(
-        target: LatLng(position.latitude, position.longitude),
-        zoom: 19,
-      );
-      // _movimentarCamera(_cameraPosition);
-      setState(() {
-        _localMotorista = position;
-      });
+      if (position != null) {
+        if (_idRequisicao != null && _idRequisicao != "") {
+          if (_statusRequisicao != StatusRequisicao.aguardando) {
+            UsuarioFirebase.atualizarDadosLocalizacao(
+                _idRequisicao!, position.latitude, position.longitude);
+          }
+        } else {
+          setState(() {
+            _localMotorista = position;
+          });
+        }
+      }
     });
   }
 
   _recuperaUltimaLocalizacaoConhecida() async {
     Position? position = await Geolocator.getLastKnownPosition();
-    setState(() {
-      if (position != null) {
-        _exibirMarcadorPassageiro(position);
-        _cameraPosition = CameraPosition(
-          target: LatLng(position.latitude, position.longitude),
-          zoom: 19,
-        );
-        // _movimentarCamera(_cameraPosition);
-        _localMotorista = position;
-      }
-    });
+    if (position != null) {}
   }
 
   _movimentarCamera(CameraPosition cameraPosition) async {
@@ -82,21 +78,21 @@ class _CorridaState extends State<Corrida> {
         .animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
   }
 
-  _exibirMarcadorPassageiro(Position position) async {
+  _exibirMarcador(Position position, String icone, String infoWindow) async {
     double pixelRatio = MediaQuery.of(context).devicePixelRatio;
 
     BitmapDescriptor.fromAssetImage(
       ImageConfiguration(devicePixelRatio: pixelRatio),
-      "images/motorista.png",
-    ).then((icone) {
-      Marker marcadorPassageiro = Marker(
-        markerId: const MarkerId("marcador-motorista"),
+      icone,
+    ).then((bitmapDescriptor) {
+      Marker marcador = Marker(
+        markerId: MarkerId(bitmapDescriptor as String),
         position: LatLng(position.latitude, position.longitude),
-        infoWindow: const InfoWindow(title: "Meu local"),
-        icon: icone,
+        infoWindow: InfoWindow(title: infoWindow),
+        icon: bitmapDescriptor,
       );
       setState(() {
-        _marcadores.add(marcadorPassageiro);
+        _marcadores.add(marcador);
       });
     });
   }
@@ -106,19 +102,18 @@ class _CorridaState extends State<Corrida> {
     FirebaseFirestore db = FirebaseFirestore.instance;
     DocumentSnapshot snapshot =
         await db.collection("requisicoes").doc(idRequisicao).get();
-    _dadosRequisicao = snapshot.data() as Map<String, dynamic>?;
-    _adicionarListenerRequisicao();
   }
 
   _adicionarListenerRequisicao() async {
     FirebaseFirestore db = FirebaseFirestore.instance;
-    String idRequisicao = _dadosRequisicao?["id"];
-    db.collection("requisicoes").doc(idRequisicao).snapshots().listen((event) {
+    await db.collection("requisicoes").doc(_idRequisicao).snapshots().listen((event) {
       if (event.data() != null) {
-        var dados = event.data() as Map<String, dynamic>;
-        String status = dados["status"];
+        _dadosRequisicao = event.data();
 
-        switch (status) {
+        var dados = event.data() as Map<String, dynamic>;
+        _statusRequisicao = dados["status"];
+
+        switch (_statusRequisicao) {
           case StatusRequisicao.aguardando:
             _statusAguardando();
             break;
@@ -148,10 +143,37 @@ class _CorridaState extends State<Corrida> {
         _aceitarCorrida();
       },
     );
+
+    final localMotorista = _localMotorista;
+    if (localMotorista != null) {
+      Position? position = Position(
+        latitude: localMotorista.latitude,
+        longitude: localMotorista.longitude,
+        timestamp: null,
+        accuracy: 0,
+        altitude: 0,
+        heading: 0,
+        speed: 0,
+        speedAccuracy: 0,
+      );
+      _exibirMarcador(
+        position,
+        "images/motorista.png",
+        "Motorista",
+      );
+      CameraPosition cameraPosition = CameraPosition(
+        target: LatLng(position.latitude, position.longitude),
+        zoom: 19,
+      );
+      _movimentarCamera(cameraPosition);
+    }
   }
 
   _statusACaminho() {
-    _alteraBotaoPrincipal("A caminho do passageiro", Colors.grey, () {});
+    _mensagemStatus = "A caminho do passageiro";
+    _alteraBotaoPrincipal("Iniciar corrida", Colors.grey, () {
+      _iniciarCorrida();
+    });
     double latitudePassageiro = _dadosRequisicao?["passageiro"]["latitude"];
     double longitudePassageiro = _dadosRequisicao?["passageiro"]["longitude"];
     double latitudeMotorista = _dadosRequisicao?["motorista"]["latitude"];
@@ -185,6 +207,8 @@ class _CorridaState extends State<Corrida> {
       ),
     );
   }
+
+  _iniciarCorrida() {}
 
   _exibirDoisMarcadores(LatLng latLngMotorista, LatLng latLngPassageiro) {
     double pixelRatio = MediaQuery.of(context).devicePixelRatio;
@@ -223,8 +247,8 @@ class _CorridaState extends State<Corrida> {
 
   _aceitarCorrida() async {
     Usuario motorista = await UsuarioFirebase.getDadosUsuarioLogado();
-    motorista.latitude = _localMotorista?.latitude;
-    motorista.longitude = _localMotorista?.longitude;
+    motorista.latitude = _dadosRequisicao?["motorista"]["latitude"];
+    motorista.longitude = _dadosRequisicao?["motorista"]["longitude"];
 
     FirebaseFirestore db = FirebaseFirestore.instance;
     String idRequisicao = _dadosRequisicao?["id"];
@@ -248,16 +272,18 @@ class _CorridaState extends State<Corrida> {
   @override
   void initState() {
     super.initState();
-    _recuperaUltimaLocalizacaoConhecida();
+    _idRequisicao = widget.idRequisicao;
+    _adicionarListenerRequisicao();
+    // _recuperaUltimaLocalizacaoConhecida();
     _adicionarListenerLocalizacao();
-    _recuperaRequisicao();
+    // _recuperaRequisicao();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Painel Corrida"),
+        title: Text("Painel Corrida - $_mensagemStatus"),
       ),
       body: Stack(
         children: [
