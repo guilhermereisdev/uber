@@ -33,7 +33,7 @@ class _PainelMotoristaState extends State<PainelMotorista> {
   _abreTelaLogin() => Navigator.pushReplacementNamed(context, "/");
 
   _adicionarListenerRequisicoes() async {
-    _streamSubscriptionRequisicoes = await db
+    _streamSubscriptionRequisicoes = db
         .collection("requisicoes")
         .where("status", isEqualTo: StatusRequisicao.aguardando)
         .snapshots()
