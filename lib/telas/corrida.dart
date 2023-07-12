@@ -21,7 +21,7 @@ class Corrida extends StatefulWidget {
 
 class _CorridaState extends State<Corrida> {
   final Completer<GoogleMapController> _controller = Completer();
-  CameraPosition _cameraPosition = const CameraPosition(
+  final CameraPosition _cameraPosition = const CameraPosition(
     target: LatLng(-23.563999, -46.653256),
   );
   Set<Marker> _marcadores = {};
@@ -137,6 +137,7 @@ class _CorridaState extends State<Corrida> {
           case StatusRequisicao.finalizada:
             break;
           case StatusRequisicao.viagem:
+            _statusEmViagem();
             break;
         }
       }
@@ -190,10 +191,12 @@ class _CorridaState extends State<Corrida> {
     _alteraBotaoPrincipal("Iniciar corrida", Colors.grey, () {
       _iniciarCorrida();
     });
+
     double latitudePassageiro = _dadosRequisicao?["passageiro"]["latitude"];
     double longitudePassageiro = _dadosRequisicao?["passageiro"]["longitude"];
     double latitudeMotorista = _dadosRequisicao?["motorista"]["latitude"];
     double longitudeMotorista = _dadosRequisicao?["motorista"]["longitude"];
+
     _exibirDoisMarcadores(
       LatLng(latitudeMotorista, longitudeMotorista),
       LatLng(latitudePassageiro, longitudePassageiro),
@@ -214,6 +217,49 @@ class _CorridaState extends State<Corrida> {
     } else {
       sLon = longitudePassageiro;
       nLon = longitudeMotorista;
+    }
+
+    _movimentarCameraBounds(
+      LatLngBounds(
+        southwest: LatLng(sLat, sLon),
+        northeast: LatLng(nLat, nLon),
+      ),
+    );
+  }
+
+  _finalizarCorrida() {}
+
+  _statusEmViagem() {
+    _mensagemStatus = "Em viagem";
+    _alteraBotaoPrincipal("Finalizar corrida", Colors.grey, () {
+      _finalizarCorrida();
+    });
+
+    double latitudeDestino = _dadosRequisicao?["destino"]["latitude"];
+    double longitudeDestino = _dadosRequisicao?["destino"]["longitude"];
+    double latitudeOrigem = _dadosRequisicao?["motorista"]["latitude"];
+    double longitudeOrigem = _dadosRequisicao?["motorista"]["longitude"];
+
+    _exibirDoisMarcadores(
+      LatLng(latitudeOrigem, longitudeOrigem),
+      LatLng(latitudeDestino, longitudeDestino),
+    );
+
+    double nLat, nLon, sLat, sLon;
+    if (latitudeOrigem <= latitudeDestino) {
+      sLat = latitudeOrigem;
+      nLat = latitudeDestino;
+    } else {
+      sLat = latitudeDestino;
+      nLat = latitudeOrigem;
+    }
+
+    if (longitudeOrigem <= longitudeDestino) {
+      sLon = longitudeOrigem;
+      nLon = longitudeDestino;
+    } else {
+      sLon = longitudeDestino;
+      nLon = longitudeOrigem;
     }
 
     _movimentarCameraBounds(
