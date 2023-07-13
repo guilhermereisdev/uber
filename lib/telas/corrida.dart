@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:uber/exception/custom_null_exception.dart';
 import 'package:uber/model/usuario.dart';
 import 'package:uber/util/usuario_firebase.dart';
@@ -116,11 +117,7 @@ class _CorridaState extends State<Corrida> {
 
   _adicionarListenerRequisicao() async {
     FirebaseFirestore db = FirebaseFirestore.instance;
-    db
-        .collection("requisicoes")
-        .doc(_idRequisicao)
-        .snapshots()
-        .listen((event) {
+    db.collection("requisicoes").doc(_idRequisicao).snapshots().listen((event) {
       if (event.data() != null) {
         _dadosRequisicao = event.data();
 
@@ -135,6 +132,7 @@ class _CorridaState extends State<Corrida> {
             _statusACaminho();
             break;
           case StatusRequisicao.finalizada:
+            _statusFinalizada();
             break;
           case StatusRequisicao.viagem:
             _statusEmViagem();
@@ -227,7 +225,26 @@ class _CorridaState extends State<Corrida> {
     );
   }
 
-  _finalizarCorrida() {}
+  _finalizarCorrida() async {
+    FirebaseFirestore db = FirebaseFirestore.instance;
+
+    await db
+        .collection("requisicoes")
+        .doc(_idRequisicao)
+        .update({"status": StatusRequisicao.finalizada});
+
+    String idPassageiro = _dadosRequisicao?["passageiro"]["idUsuario"];
+    await db
+        .collection("requisicao_ativa")
+        .doc(idPassageiro)
+        .update({"status": StatusRequisicao.finalizada});
+
+    String idMotorista = _dadosRequisicao?["motorista"]["idUsuario"];
+    await db
+        .collection("requisicao_ativa_motorista")
+        .doc(idMotorista)
+        .update({"status": StatusRequisicao.finalizada});
+  }
 
   _statusEmViagem() {
     _mensagemStatus = "Em viagem";
@@ -269,6 +286,32 @@ class _CorridaState extends State<Corrida> {
       ),
     );
   }
+
+  _statusFinalizada() {
+    double latitudeDestino = _dadosRequisicao?["destino"]["latitude"];
+    double longitudeDestino = _dadosRequisicao?["destino"]["longitude"];
+    double latitudeOrigem = _dadosRequisicao?["origem"]["latitude"];
+    double longitudeOrigem = _dadosRequisicao?["origem"]["longitude"];
+
+    double distanciaEmMetros = Geolocator.distanceBetween(
+        latitudeOrigem, longitudeOrigem, latitudeDestino, longitudeDestino);
+
+    double distanciaEmKilometros = distanciaEmMetros / 1000;
+
+    // valor por km fixo em 8 reais
+    double valorViagem = distanciaEmKilometros * 8;
+
+    var numberFormat = NumberFormat("#,##0.00", "pt_BR");
+    var valorViagemFormatado = numberFormat.format(valorViagem);
+
+    _mensagemStatus = "Viagem finalizada";
+    _alteraBotaoPrincipal("Confirmar - R\$ $valorViagemFormatado", Colors.grey,
+        () {
+      _confirmarCorrida();
+    });
+  }
+
+  _confirmarCorrida() {}
 
   _iniciarCorrida() async {
     FirebaseFirestore db = FirebaseFirestore.instance;
