@@ -55,22 +55,22 @@ class _CorridaState extends State<Corrida> {
     );
     Geolocator.getPositionStream(locationSettings: locationSettings)
         .listen((position) {
-      if (position != null) {
-        if (_idRequisicao != null && _idRequisicao != "") {
-          if (_statusRequisicao != StatusRequisicao.aguardando) {
-            UsuarioFirebase.atualizarDadosLocalizacao(
-                _idRequisicao!, position.latitude, position.longitude);
-          } else {
-            setState(() {
-              _localMotorista = position;
-            });
-            _statusAguardando();
-          }
-        } else if (_idRequisicao == null) {
-          CustomNullException("_idRequisicao", "_adicionarListenerLocalizacao");
+      if (_idRequisicao != null && _idRequisicao != "") {
+        if (_statusRequisicao != StatusRequisicao.aguardando) {
+          UsuarioFirebase.atualizarDadosLocalizacao(
+            _idRequisicao!,
+            position.latitude,
+            position.longitude,
+            "motorista",
+          );
+        } else {
+          setState(() {
+            _localMotorista = position;
+          });
+          _statusAguardando();
         }
-      } else {
-        CustomNullException("position", "_adicionarListenerLocalizacao");
+      } else if (_idRequisicao == null) {
+        CustomNullException("_idRequisicao", "_adicionarListenerLocalizacao");
       }
     });
   }
@@ -118,11 +118,7 @@ class _CorridaState extends State<Corrida> {
 
   _adicionarListenerRequisicao() async {
     FirebaseFirestore db = FirebaseFirestore.instance;
-    db
-        .collection("requisicoes")
-        .doc(_idRequisicao)
-        .snapshots()
-        .listen((event) {
+    db.collection("requisicoes").doc(_idRequisicao).snapshots().listen((event) {
       if (event.data() != null) {
         _dadosRequisicao = event.data();
 

@@ -120,7 +120,11 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
         .listen((position) {
       if (_idRequisicao != null && _idRequisicao != "") {
         UsuarioFirebase.atualizarDadosLocalizacao(
-            _idRequisicao!, position.latitude, position.longitude);
+          _idRequisicao!,
+          position.latitude,
+          position.longitude,
+          "passageiro",
+        );
       } else {
         setState(() {
           _localPassageiro = position;
