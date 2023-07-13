@@ -324,6 +324,9 @@ class _CorridaState extends State<Corrida> {
       speed: 0,
       speedAccuracy: 0,
     );
+
+    _marcadores = {};
+
     _exibirMarcador(
       position,
       "images/destino.png",
