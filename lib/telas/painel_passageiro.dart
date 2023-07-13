@@ -216,6 +216,11 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
         .doc(_idRequisicao)
         .update({"status": StatusRequisicao.cancelada}).then((_) async {
       await db.collection("requisicao_ativa").doc(user?.uid).delete();
+      _statusUberNaoChamado();
+      if (_streamSubscriptionRequisicoes != null) {
+        _streamSubscriptionRequisicoes?.cancel();
+        _streamSubscriptionRequisicoes = null;
+      }
     });
   }
 
@@ -834,5 +839,6 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
   void dispose() {
     super.dispose();
     _streamSubscriptionRequisicoes?.cancel();
+    _streamSubscriptionRequisicoes = null;
   }
 }

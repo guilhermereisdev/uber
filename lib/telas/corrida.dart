@@ -109,13 +109,6 @@ class _CorridaState extends State<Corrida> {
     });
   }
 
-  _recuperaRequisicao() async {
-    String? idRequisicao = widget.idRequisicao;
-    FirebaseFirestore db = FirebaseFirestore.instance;
-    DocumentSnapshot snapshot =
-        await db.collection("requisicoes").doc(idRequisicao).get();
-  }
-
   _adicionarListenerRequisicao() async {
     FirebaseFirestore db = FirebaseFirestore.instance;
     db.collection("requisicoes").doc(_idRequisicao).snapshots().listen((event) {
