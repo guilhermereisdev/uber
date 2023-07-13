@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:uber/enum/routes_names.dart';
 import 'package:uber/exception/custom_null_exception.dart';
 import 'package:uber/model/usuario.dart';
 import 'package:uber/util/usuario_firebase.dart';
@@ -117,7 +118,11 @@ class _CorridaState extends State<Corrida> {
 
   _adicionarListenerRequisicao() async {
     FirebaseFirestore db = FirebaseFirestore.instance;
-    db.collection("requisicoes").doc(_idRequisicao).snapshots().listen((event) {
+    db
+        .collection("requisicoes")
+        .doc(_idRequisicao)
+        .snapshots()
+        .listen((event) {
       if (event.data() != null) {
         _dadosRequisicao = event.data();
 
@@ -136,6 +141,9 @@ class _CorridaState extends State<Corrida> {
             break;
           case StatusRequisicao.viagem:
             _statusEmViagem();
+            break;
+          case StatusRequisicao.confirmada:
+            _statusConfirmada();
             break;
         }
       }
@@ -309,9 +317,46 @@ class _CorridaState extends State<Corrida> {
         () {
       _confirmarCorrida();
     });
+
+    Position? position = Position(
+      latitude: latitudeDestino,
+      longitude: longitudeDestino,
+      timestamp: null,
+      accuracy: 0,
+      altitude: 0,
+      heading: 0,
+      speed: 0,
+      speedAccuracy: 0,
+    );
+    _exibirMarcador(
+      position,
+      "images/destino.png",
+      "Destino",
+    );
+    CameraPosition cameraPosition = CameraPosition(
+      target: LatLng(position.latitude, position.longitude),
+      zoom: 19,
+    );
+    _movimentarCamera(cameraPosition);
   }
 
-  _confirmarCorrida() {}
+  _statusConfirmada() {
+    Navigator.pushReplacementNamed(context, RoutesNames.painelMotorista);
+  }
+
+  _confirmarCorrida() async {
+    FirebaseFirestore db = FirebaseFirestore.instance;
+    await db
+        .collection("requisicoes")
+        .doc(_idRequisicao)
+        .update({"status": StatusRequisicao.confirmada});
+
+    String idPassageiro = _dadosRequisicao?["passageiro"]["idUsuario"];
+    await db.collection("requisicao_ativa").doc(idPassageiro).delete();
+
+    String idMotorista = _dadosRequisicao?["motorista"]["idUsuario"];
+    await db.collection("requisicao_ativa_motorista").doc(idMotorista).delete();
+  }
 
   _iniciarCorrida() async {
     FirebaseFirestore db = FirebaseFirestore.instance;
