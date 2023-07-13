@@ -70,7 +70,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '625128337187',
     projectId: 'uber-gui',
     storageBucket: 'uber-gui.appspot.com',
-    iosClientId: '625128337187-jd28arom8s2bain629rp9sk3umhfcob6.apps.googleusercontent.com',
+    iosClientId:
+        '625128337187-jd28arom8s2bain629rp9sk3umhfcob6.apps.googleusercontent.com',
     iosBundleId: 'com.guilhermereisapps.uber',
   );
 }

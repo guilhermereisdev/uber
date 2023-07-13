@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
+import 'package:uber/enum/routes_names.dart';
 import 'package:uber/enum/status_requisicao.dart';
 import 'package:uber/exception/custom_exception.dart';
 import 'package:uber/exception/custom_null_exception.dart';
@@ -63,7 +65,7 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
     }
   }
 
-  _abreTelaLogin() => Navigator.pushReplacementNamed(context, "/");
+  _abreTelaLogin() => Navigator.pushReplacementNamed(context, RoutesNames.home);
 
   _onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);
@@ -119,7 +121,11 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
         .listen((position) {
       if (_idRequisicao != null && _idRequisicao != "") {
         UsuarioFirebase.atualizarDadosLocalizacao(
-            _idRequisicao!, position.latitude, position.longitude);
+          _idRequisicao!,
+          position.latitude,
+          position.longitude,
+          "passageiro",
+        );
       } else {
         setState(() {
           _localPassageiro = position;
@@ -210,6 +216,11 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
         .doc(_idRequisicao)
         .update({"status": StatusRequisicao.cancelada}).then((_) async {
       await db.collection("requisicao_ativa").doc(user?.uid).delete();
+      _statusUberNaoChamado();
+      if (_streamSubscriptionRequisicoes != null) {
+        _streamSubscriptionRequisicoes?.cancel();
+        _streamSubscriptionRequisicoes = null;
+      }
     });
   }
 
@@ -438,6 +449,107 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
     _exibirCentralizarDoisMarcadores(marcadorOrigem, marcadorDestino);
   }
 
+  _statusFinalizada() {
+    double latitudeDestino = _dadosRequisicao?["destino"]["latitude"];
+    double longitudeDestino = _dadosRequisicao?["destino"]["longitude"];
+    double latitudeOrigem = _dadosRequisicao?["origem"]["latitude"];
+    double longitudeOrigem = _dadosRequisicao?["origem"]["longitude"];
+
+    double distanciaEmMetros = Geolocator.distanceBetween(
+        latitudeOrigem, longitudeOrigem, latitudeDestino, longitudeDestino);
+
+    double distanciaEmKilometros = distanciaEmMetros / 1000;
+
+    // valor por km fixo em 8 reais
+    double valorViagem = distanciaEmKilometros * 8;
+
+    var numberFormat = NumberFormat("#,##0.00", "pt_BR");
+    var valorViagemFormatado = numberFormat.format(valorViagem);
+
+    _alteraBotaoPrincipal(
+        "Total - R\$ $valorViagemFormatado", Colors.green, () {});
+
+    Position? position = Position(
+      latitude: latitudeDestino,
+      longitude: longitudeDestino,
+      timestamp: null,
+      accuracy: 0,
+      altitude: 0,
+      heading: 0,
+      speed: 0,
+      speedAccuracy: 0,
+    );
+
+    _marcadores = {};
+
+    _exibirMarcador(
+      position,
+      "images/destino.png",
+      "Destino",
+    );
+    CameraPosition cameraPosition = CameraPosition(
+      target: LatLng(position.latitude, position.longitude),
+      zoom: 19,
+    );
+    _movimentarCamera(cameraPosition);
+  }
+
+  _statusConfirmada() {
+    if (_streamSubscriptionRequisicoes != null) {
+      _streamSubscriptionRequisicoes?.cancel();
+      _streamSubscriptionRequisicoes = null;
+    }
+    _exibirCaixaEnderecoDestino = true;
+    _alteraBotaoPrincipal(
+      "Chamar Uber",
+      Colors.black,
+      () {
+        _chamarUber();
+      },
+    );
+
+    // Exibe local do passageiro
+    double passageiroLat = _dadosRequisicao?["passageiro"]["latitude"];
+    double passageiroLon = _dadosRequisicao?["passageiro"]["longitude"];
+    Position position = Position(
+        longitude: passageiroLon,
+        latitude: passageiroLat,
+        timestamp: null,
+        accuracy: 0,
+        altitude: 0,
+        heading: 0,
+        speed: 0,
+        speedAccuracy: 0);
+    _exibirMarcadorPassageiro(position);
+    CameraPosition cameraPosition = CameraPosition(
+      target: LatLng(position.latitude, position.longitude),
+      zoom: 19,
+    );
+
+    _movimentarCamera(cameraPosition);
+
+    _dadosRequisicao = {};
+  }
+
+  _exibirMarcador(Position position, String icone, String infoWindow) async {
+    double pixelRatio = MediaQuery.of(context).devicePixelRatio;
+
+    BitmapDescriptor.fromAssetImage(
+      ImageConfiguration(devicePixelRatio: pixelRatio),
+      icone,
+    ).then((bitmapDescriptor) {
+      Marker marcador = Marker(
+        markerId: MarkerId(icone),
+        position: LatLng(position.latitude, position.longitude),
+        infoWindow: InfoWindow(title: infoWindow),
+        icon: bitmapDescriptor,
+      );
+      setState(() {
+        _marcadores.add(marcador);
+      });
+    });
+  }
+
   _exibirCentralizarDoisMarcadores(
       Marcador marcadorOrigem, Marcador marcadorDestino) {
     double latitudeOrigem = marcadorOrigem.local.latitude;
@@ -553,9 +665,13 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
             _statusACaminho();
             break;
           case StatusRequisicao.finalizada:
+            _statusFinalizada();
             break;
           case StatusRequisicao.viagem:
             _statusEmViagem();
+            break;
+          case StatusRequisicao.confirmada:
+            _statusConfirmada();
             break;
         }
       }
@@ -723,5 +839,6 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
   void dispose() {
     super.dispose();
     _streamSubscriptionRequisicoes?.cancel();
+    _streamSubscriptionRequisicoes = null;
   }
 }
