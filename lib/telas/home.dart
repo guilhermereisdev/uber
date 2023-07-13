@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:uber/enum/routes_names.dart';
 import '../exception/custom_exception.dart';
 import '../model/Usuario.dart';
 
@@ -72,13 +73,13 @@ class _HomeState extends State<Home> {
     throw CustomException("Função de logar usuário não foi executada.");
   }
 
-  _abreTelaCadastro() => Navigator.pushNamed(context, "/cadastro");
+  _abreTelaCadastro() => Navigator.pushNamed(context, RoutesNames.cadastro);
 
   _abreTelaInicialAreaLogadaPassageiro() =>
-      Navigator.pushReplacementNamed(context, "/painel-passageiro");
+      Navigator.pushReplacementNamed(context, RoutesNames.painelPassageiro);
 
   _abreTelaInicialAreaLogadaMotorista() =>
-      Navigator.pushReplacementNamed(context, "/painel-motorista");
+      Navigator.pushReplacementNamed(context, RoutesNames.painelMotorista);
 
   _redirecionaParaTelaInicialLogadaPorTipoUsuario(String? idUsuario) async {
     var db = FirebaseFirestore.instance;

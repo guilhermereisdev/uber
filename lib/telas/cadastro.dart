@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:uber/enum/routes_names.dart';
 import 'package:uber/exception/custom_exception.dart';
 import 'package:uber/model/usuario.dart';
 
@@ -82,12 +83,12 @@ class _CadastroState extends State<Cadastro> {
     _tipoUsuario
         ? Navigator.pushNamedAndRemoveUntil(
             context,
-            "/painel-motorista",
+            RoutesNames.painelMotorista,
             (_) => false,
           )
         : Navigator.pushNamedAndRemoveUntil(
             context,
-            "/painel-passageiro",
+            RoutesNames.painelPassageiro,
             (_) => false,
           );
   }

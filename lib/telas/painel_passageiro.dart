@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:uber/enum/routes_names.dart';
 import 'package:uber/enum/status_requisicao.dart';
 import 'package:uber/exception/custom_exception.dart';
 import 'package:uber/exception/custom_null_exception.dart';
@@ -63,7 +64,7 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
     }
   }
 
-  _abreTelaLogin() => Navigator.pushReplacementNamed(context, "/");
+  _abreTelaLogin() => Navigator.pushReplacementNamed(context, RoutesNames.home);
 
   _onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);

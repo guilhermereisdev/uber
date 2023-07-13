@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uber/enum/routes_names.dart';
 import 'package:uber/telas/cadastro.dart';
 import 'package:uber/telas/corrida.dart';
 import 'package:uber/telas/home.dart';
@@ -10,15 +11,15 @@ class Rotas {
     final args = settings.arguments.toString();
 
     switch (settings.name) {
-      case "/":
+      case RoutesNames.home:
         return MaterialPageRoute(builder: (_) => const Home());
-      case "/cadastro":
+      case RoutesNames.cadastro:
         return MaterialPageRoute(builder: (_) => const Cadastro());
-      case "/painel-motorista":
+      case RoutesNames.painelMotorista:
         return MaterialPageRoute(builder: (_) => const PainelMotorista());
-      case "/painel-passageiro":
+      case RoutesNames.painelPassageiro:
         return MaterialPageRoute(builder: (_) => const PainelPassageiro());
-      case "/corrida":
+      case RoutesNames.corrida:
         return MaterialPageRoute(builder: (_) => Corrida(idRequisicao: args));
       default:
         _erroRota();

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:uber/enum/routes_names.dart';
 import 'package:uber/enum/status_requisicao.dart';
 import 'package:uber/util/usuario_firebase.dart';
 
@@ -30,7 +31,7 @@ class _PainelMotoristaState extends State<PainelMotorista> {
     }
   }
 
-  _abreTelaLogin() => Navigator.pushReplacementNamed(context, "/");
+  _abreTelaLogin() => Navigator.pushReplacementNamed(context, RoutesNames.home);
 
   _adicionarListenerRequisicoes() async {
     _streamSubscriptionRequisicoes = db
@@ -61,7 +62,7 @@ class _PainelMotoristaState extends State<PainelMotorista> {
       await Future.microtask(() {
         Navigator.pushReplacementNamed(
           context,
-          "/corrida",
+          RoutesNames.corrida,
           arguments: idRequisicao,
         );
       });
@@ -151,7 +152,7 @@ class _PainelMotoristaState extends State<PainelMotorista> {
                         onTap: () {
                           Navigator.pushNamed(
                             context,
-                            "/corrida",
+                            RoutesNames.corrida,
                             arguments: idRequisicao,
                           );
                         },
