@@ -14,11 +14,9 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final TextEditingController _controllerEmail =
-      TextEditingController(text: "guilhermereis2009@hotmail.com");
+  final TextEditingController _controllerEmail = TextEditingController();
 
-  final TextEditingController _controllerSenha =
-      TextEditingController(text: "11111111");
+  final TextEditingController _controllerSenha = TextEditingController();
   bool _errorContainerVisibility = false;
   String _mensagemErro = "";
   bool _loadingVisibility = false;

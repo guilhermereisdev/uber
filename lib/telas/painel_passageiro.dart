@@ -32,8 +32,7 @@ class _PainelPassageiroState extends State<PainelPassageiro> {
   );
   bool _isLoading = true;
   Set<Marker> _marcadores = {};
-  final TextEditingController _controllerDestino =
-      TextEditingController(text: "Av Paulista, 807");
+  final TextEditingController _controllerDestino = TextEditingController();
   bool _exibirCaixaEnderecoDestino = true;
   String _textoBotao = "Chamar Uber";
   Color _corBotao = Colors.black;
